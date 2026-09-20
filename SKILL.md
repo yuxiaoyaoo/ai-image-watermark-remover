@@ -21,19 +21,20 @@ agent_created: true
 
 ### 1. 定位源文件
 
-用户通常通过粘贴图片提供素材。WorkBuddy 会把粘贴的图落盘到剪贴板目录：
+源文件有两种来源，**容器层残留情况完全不同**，处理方式相同：
 
-```
-<home>/.workbuddy/clipboard-images/clipboard-<ISO时间戳>-<hash>.<ext>
-```
+| 来源 | 典型路径 | 容器层现状 |
+|------|----------|------------|
+| 用户从网页/App **直接下载**的原图 | `<home>/Downloads/xxx.jpg` | **C2PA/JUMBF 清单、EXIF 完整保留**，脚本会报 `found in src: c2pa, jumbf, meta:exif` |
+| 用户**粘贴**进对话的图 | `<home>/.workbuddy/clipboard-images/clipboard-<ISO时间戳>-<hash>.<ext>` | C2PA 在剪贴板转存环节已丢失，通常只剩 `icc_profile` |
 
-粘贴消息里会带 `<image_local_path>`，直接用它。若消息里没有（多图粘贴时常见），按修改时间取最新的若干张：
+粘贴的图：消息里会带 `<image_local_path>`，直接用它。若消息里没有（多图粘贴时常见），按修改时间取最新的若干张：
 
 ```bash
 ls -lat "<home>/.workbuddy/clipboard-images/" | head -10
 ```
 
-注意：粘贴转存成 JPEG/JPG 时，原文件的 C2PA 清单**在剪贴板环节就已被丢弃**，因此容器层往往只剩 ICC。这是正常的，不必反复搜索 `c2pa` 字样去"确认水印存在"——用户看到的是平台界面上的隐藏标记，直接执行清理即可。
+**不要**因为 grep 不到 `c2pa` 就去"确认水印是否存在"——剪贴板图必然只剩 ICC，直接执行清理即可。真实下载图则会有完整清单，脚本的 `found in src` 会明确列出来，这就是清理有效的证据。
 
 ### 2. 运行清理脚本
 
@@ -70,6 +71,8 @@ C:/Users/Administrator/.workbuddy/binaries/python/envs/default/Scripts/python.ex
 - `strong`：再叠加 1px 边缘裁切 + 轻微 unsharp，破坏力最强，尺寸回来后不变，但像素改动更多
 
 脚本每次会自检并打印 `found in src` / `residual out`，`residual out: none` 即表示容器层已干净。
+
+**命名约定**：批量任务里如需与之前输出保持一致，可在脚本输出后 `mv` 重命名（例如统一成 `no_watermark_<n>.png`）。
 
 ### 3. 交付
 
