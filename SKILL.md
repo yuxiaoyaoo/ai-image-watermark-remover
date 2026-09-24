@@ -15,6 +15,8 @@ agent_created: true
 | 容器/元数据层 | C2PA (JUMBF) 溯源清单、EXIF、XMP、ICC profile、PNG tEXt/iTXt/zTXt、文件尾附加数据 | 只解码像素、丢弃整个容器，重新封装 |
 | 像素层 | 隐写水印（SynthID 类频域/空域嵌入） | LSB 微噪声 + 亚像素重采样 +（可选）边缘裁切与高通 |
 
+**透明通道**：RGBA/带透明的 PNG 源图会**保留 alpha 通道**输出 PNG；JPG 输出自动垫白底合成（JPEG 不支持透明）。绝不能把 RGBA 强转 RGB——那会在透明区垫出黑底，表现为"凭空加了背景"。
+
 **不适用**：可见的叠层水印（如右下角 logo、半透明文字）。那类需要裁切或 inpainting，不走本技能。
 
 ## 执行流程
